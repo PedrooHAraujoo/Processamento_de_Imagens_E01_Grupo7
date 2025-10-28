@@ -30,31 +30,178 @@ def upload_imagem():
 
 upload_imagem()
 
-def separador():
-  print("--------------------------------------------- \n")
-
-def separar_canais(caminho):
-  imagem = caminho
-  imagem = cv.imread(imagem)
-
+def separar_rgb(imagem):
   img_rgb = cv.cvtColor(imagem,cv.COLOR_BGR2RGB)
-  img_hsv = cv.cvtColor(imagem,cv.COLOR_BGR2HSV)
-  img_lab = cv.cvtColor(imagem,cv.COLOR_BGR2LAB)
-
-  print("Imagem em RGB")
   cv2_imshow(img_rgb)
 
-  separador()
-
-  print("Imagem em HSV")
+def separar_hsv(imagem):
+  img_hsv = cv.cvtColor(imagem,cv.COLOR_BGR2HSV)
   cv2_imshow(img_hsv)
 
-  separador()
-
-  print("Imagem em LAB")
+def separar_lab(imagem):
+  img_lab = cv.cvtColor(imagem,cv.COLOR_BGR2LAB)
   cv2_imshow(img_lab)
 
 imagem1 = cv.imread('/content/20250921_192145.jpg')
 cv2_imshow(imagem1)
 
-separar_canais("/content/20250921_192145.jpg")
+def menu():
+  opcoes = {
+      '1': 'Trocar canais',
+      '2': 'Simular daltonismo',
+      '3': 'Converter imagem',
+      #adicionar mais implementações com base na progressão do projeto
+      '0': 'Sair'
+  }
+  for id in opcoes:
+    print(f"{id} - {opcoes[id]}")
+  option = input("Escolha uma opção: ")
+  match option:
+    case '1':
+      menu_canais()
+    case '2':
+      menu_daltonismo()
+    case '3':
+      menu_converter()
+    case '0':
+      exit()
+
+#-------------------------------------------------
+
+def menu_canais():
+  opcoes ={
+      '1': 'Transformar imagem em RGB',
+      '2': 'Transformar imagem em HSV',
+      '3': 'Transformar imagem em LAB',
+      '0': 'Voltar'
+  }
+  for id in opcoes:
+    print(f"{id} - {opcoes[id]}")
+  option = input("Escolha uma opção: ")
+  match option:
+    case '1':
+      separar_rgb(imagem1)
+    case '2':
+      separar_hsv(imagem1)
+    case '3':
+      separar_lab(imagem1)
+    case '0':
+      menu()
+
+#----------------------------------------
+
+def menu_daltonismo():
+  opcoes ={
+      '1': 'Simular Protanopia',
+      '2': 'Simular Deuteranopia',
+      '3': 'Simular Tritanopia',
+      '0': 'Voltar'
+  }
+  for id in opcoes:
+    print(f"{id} - {opcoes[id]}")
+  option = input("Escolha uma opção: ")
+  match option:
+    case '1':
+      simular_daltonismo(imagem1, 'protanopia')
+    case '2':
+      simular_daltonismo(imagem1, 'deuteranopia')
+    case '3':
+      simular_daltonismo(imagem1, 'tritanopia')
+    case '0':
+      menu()
+
+#------------------------------------------
+
+def menu_converter():
+  opcoes ={
+      '1': 'Converter para PNG',
+      '2': 'Converter para BMP',
+      '3': 'Converter para JPG',
+      '0': 'Voltar'
+  }
+  for id in opcoes:
+    print(f"{id} - {opcoes[id]}")
+  option = input("Escolha uma opção: ")
+  match option:
+    case '1':
+      converter_imagem(imagem1, 'png')
+    case '2':
+      converter_imagem(imagem1, 'bmp')
+    case '3':
+      converter_imagem(imagem1, 'jpg')
+    case '0':
+      menu()
+
+menu()
+
+def simular_daltonismo(imagem, tipo_daltonismo):
+  if tipo_daltonismo == 'protanopia':
+    # Matriz de transformação para Protanopia (vermelho fraco)
+    matriz_transformacao = np.array([
+        [0.567, 0.433, 0.0],
+        [0.558, 0.442, 0.0],
+        [0.0, 0.242, 0.758]
+    ]).T
+  elif tipo_daltonismo == 'deuteranopia':
+    # Matriz de transformação para Deuteranopia (verde fraco)
+    matriz_transformacao = np.array([
+        [0.625, 0.375, 0.0],
+        [0.700, 0.300, 0.0],
+        [0.0, 0.300, 0.700]
+    ]).T
+  elif tipo_daltonismo == 'tritanopia':
+    # Matriz de transformação para Tritanopia (azul fraco)
+    matriz_transformacao = np.array([
+        [0.95, 0.05, 0.0],
+        [0.0, 0.433, 0.567],
+        [0.0, 0.475, 0.525]
+    ]).T
+
+  # Aplicar a transformação na imagem
+  imagem_simulada = imagem.copy()
+  for i in range(imagem.shape[0]):
+    for j in range(imagem.shape[1]):
+      pixel = imagem[i, j]
+      pixel_transformado = np.dot(matriz_transformacao, pixel)
+      # Garantir que os valores fiquem dentro do intervalo [0, 255]
+      imagem_simulada[i, j] = np.clip(pixel_transformado, 0, 255)
+
+  return imagem_simulada
+
+"""### Segunda parte - Simulação de Daltonismo"""
+
+# Exemplo de uso da função (substitua 'imagem1' pela sua imagem carregada)
+simular_protanopia = simular_daltonismo(imagem1, 'protanopia')
+cv2_imshow(simular_protanopia)
+
+simular_deuteranopia = simular_daltonismo(imagem1, 'deuteranopia')
+cv2_imshow(simular_deuteranopia)
+
+simular_tritanopia = simular_daltonismo(imagem1, 'tritanopia')
+cv2_imshow(simular_tritanopia)
+
+def converter_imagem(imagem, nova_extensao):
+  """
+  Converte uma imagem para uma nova extensão (png, bmp, jpg).
+
+  Args:
+    imagem: Objeto de imagem do OpenCV (numpy array).
+    nova_extensao: String indicando a nova extensão desejada ('png', 'bmp', 'jpg').
+
+  Returns:
+    O caminho do arquivo da imagem salva com a nova extensão, ou None se a conversão falhar.
+  """
+  if nova_extensao not in ['png', 'bmp', 'jpg']:
+    print("Extensão inválida. Use 'png', 'bmp' ou 'jpg'.")
+    return None
+
+  nome_base = "imagem_convertida"
+  caminho_saida = f"{nome_base}.{nova_extensao}"
+
+  try:
+    cv.imwrite(caminho_saida, imagem)
+    print(f"Imagem salva como {caminho_saida}")
+    return caminho_saida
+  except Exception as e:
+    print(f"Erro ao converter a imagem: {e}")
+    return None
